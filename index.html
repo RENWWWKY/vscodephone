@@ -124,6 +124,7 @@ body{font-family:var(--font);height:100vh;height:100dvh;background:var(--bg);col
     <div class="ed-bar">
       <div id="tabsWrap"></div>
       <div class="ed-tools">
+        <button onclick="openFullscreen()" style="color:var(--green)">▶ 运行</button>
         <button onclick="importFiles()">📂 导入</button>
         <button onclick="addF()">+</button>
         <button onclick="dl()">💾</button>
@@ -148,8 +149,9 @@ body{font-family:var(--font);height:100vh;height:100dvh;background:var(--bg);col
         <button onclick="$('conPanel').classList.add('hidden')">✕</button>
       </div>
       <div class="con-body" id="conBody"></div><div class="con-inp"><span>›</span><input id="conInp" placeholder="执行JS..."></div>
-    </div><div class="pv-tools">
+    </div>    <div class="pv-tools">
       <button onclick="runPreview()">▶ 刷新预览</button>
+      <button onclick="openFullscreen()">↗ 全屏运行</button>
       <button onclick="$('conPanel').classList.toggle('hidden')">📟 控制台</button>
       <button onclick="sendErrsToAI()" class="fix" id="fixBtn" style="display:none">🔧 AI修复</button>
     </div>
@@ -303,6 +305,15 @@ function undo(){
 }
 
 // ===== 预览 =====
+function openFullscreen(){
+  if(cur)F[cur]=$('ed').value;
+  let html=F[cur];
+  if(!cur || !cur.endsWith('.html')){const hf=Object.keys(F).find(f=>f.endsWith('.html'));if(hf)html=F[hf]}
+  if(!html) return alert('找不到 HTML 文件进行预览！');
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  window.open(URL.createObjectURL(blob),'_blank');
+}
+
 function runPreview(){
   if(cur)F[cur]=$('ed').value;clearCon();
   const hook=`<script>(function(){var P=window.parent;function s(t,a,st){var l=st?(st.split('\\n')[1]||'').match(/:(\\d+):(\\d+)/):null;P.postMessage({_c:1,t:t,a:Array.from(a).map(function(x){try{return typeof x==='object'?JSON.stringify(x,null,2):String(x)}catch(e){return String(x)}}),l:l?parseInt(l[1]):null},'*')}['log','warn','error','info'].forEach(function(m){var o=console[m];console[m]=function(){o.apply(console,arguments);s(m,arguments,new Error().stack)}});window.onerror=function(m,u,l){P.postMessage({_c:1,t:'error',a:[m],l:l},'*')};window.addEventListener('unhandledrejection',function(e){s('error',['Promise: '+e.reason],new Error().stack)})})()<\/script>`;
