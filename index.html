@@ -9,21 +9,21 @@
 			name="apple-mobile-web-app-status-bar-style"
 			content="black-translucent"
 		/>
-		<meta name="apple-mobile-web-app-title" content="AI手机编程" />
+		<meta name="apple-mobile-web-app-title" content="AI编程手机" />
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="theme-color" content="#000000" />
 		<link
 			rel="apple-touch-icon"
-			href="https://i.postimg.cc/ZRc4Fq8P/IMG-1806.jpg"
+			href="https://i.postimg.cc/jSvXWqdN/3223CA2E-77DF-4379-BFBC-649A512E3DFB.png"
 		/>
 		<link
 			rel="icon"
-			type="image/jpeg"
-			href="https://i.postimg.cc/ZRc4Fq8P/IMG-1806.jpg"
+			type="image/png"
+			href="https://i.postimg.cc/jSvXWqdN/3223CA2E-77DF-4379-BFBC-649A512E3DFB.png"
 		/>
 		<link
 			rel="manifest"
-			href="data:application/manifest+json,%7B%22name%22%3A%22AI%E6%89%8B%E6%9C%BA%E7%BC%96%E7%A8%8B%22%2C%22short_name%22%3A%22AI%E6%89%8B%E6%9C%BA%E7%BC%96%E7%A8%8B%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22fullscreen%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%23000000%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fi.postimg.cc%2FZRc4Fq8P%2FIMG-1806.jpg%22%2C%22sizes%22%3A%22192x192%20512x512%22%2C%22type%22%3A%22image%2Fjpeg%22%7D%5D%7D"
+			href="data:application/manifest+json,%7B%22name%22%3A%22Moon%E5%B0%8F%E6%89%8B%E6%9C%BA%22%2C%22short_name%22%3A%22Moon%E5%B0%8F%E6%89%8B%E6%9C%BA%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22fullscreen%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%23000000%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fi.postimg.cc%2FjSvXWqdN%2F3223CA2E-77DF-4379-BFBC-649A512E3DFB.png%22%2C%22sizes%22%3A%22192x192%20512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D"
 		/>
 <title>AI 编程助手</title>
 <style>
@@ -598,16 +598,27 @@ async function send(){
   hist.push({role:'user',content:userContent});
   autoSave();
 
-  // 始终把完整代码放进 system，最近10条对话作为上下文
+  // 核心改进：用户消息放在最后，system 消息精简且放在开头
   const sys=SYS+(cur?`\n\n当前文件:${cur}\n完整代码:\n\`\`\`\n${F[cur]}\n\`\`\``:'\n\n(当前无打开的文件)');
   const recentHist=hist.slice(-10);
+  
+  // 重新组织消息结构：system -> 历史对话（不包含最新用户消息）-> 最新用户消息单独强调
+  const historyWithoutLast = recentHist.slice(0, -1);
+  const lastUserMsg = recentHist[recentHist.length - 1];
+  
+  // 构建最终消息数组，确保用户消息在最显眼位置
+  const finalMessages = [
+    {role:'system',content:sys},
+    ...historyWithoutLast,
+    {role:'user',content:`【用户当前需求 - 请务必优先处理】\n${typeof lastUserMsg.content === 'string' ? lastUserMsg.content : JSON.stringify(lastUserMsg.content)}`}
+  ];
 
   $('btn').disabled=true;
   try{
     const res=await fetch(`${base}/chat/completions`,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-      body:JSON.stringify({model,messages:[{role:'system',content:sys},...recentHist],temperature:1,stream: false})
+      body:JSON.stringify({model,messages:finalMessages,temperature:1,stream: false})
     });
     
     const data=await res.json();
